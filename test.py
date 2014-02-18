@@ -11,7 +11,9 @@ if __name__=='__main__':
     image = Image.new("RGB", (v.size_x, v.size_y))
     for y in range(v.size_y):
         for x in range(v.size_x):
-            if v.grid_map[x][y]<204:
+            if v.isVoronoi(x,y):
+                image.putpixel((x,y),(0,0,255))
+            if v.grid_map[x][y]==1:
                 image.putpixel((x,y),(0,0,0))
             else:
                 image.putpixel((x,y),(255,255,255))

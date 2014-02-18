@@ -35,10 +35,10 @@ class DataCell:
         self.needs_raise = needs_raise
         
     def isOccupied(self, x, y):
-        if obst==None:
+        if self.obst==None:
             return False
         else:
-            return c.obst[0]==x and c.obst[1]==y
+            return self.obst[0]==x and self.obst[1]==y
             
 class DynamicVoronoi:
     def __init__(self, size_x, size_y, initial_map=None):
@@ -66,12 +66,12 @@ class DynamicVoronoi:
                 for y in range(size_y):
                     if self.grid_map[x][y]:
                         c = self.data[x][y]
-                        if not c.is_occupied(x,y):
+                        if not c.isOccupied(x,y):
                             if self.is_surrounded(x,y):
                                 c.obst = (x,y)
                                 c.dist = 0
                                 c.sqdist = 0
-                                c.voronoi=occupied
+                                c.voronoi= State.OCCUPIED
                                 c.queueing = QState.FW_PROCESSED
                             else:
                                 self.setObstacle(x,y)
@@ -88,7 +88,7 @@ class DynamicVoronoi:
                 ny = y + dy
                 if ny<=0 or ny >= self.size_y-1:
                     continue
-                a.append(nx, ny)
+                a.append((nx, ny))
         return a
         
     def is_surrounded(self, x, y):
@@ -155,18 +155,18 @@ class DynamicVoronoi:
             if c.queueing==QState.FW_PROCESSED:
                 continue
                 
-            if c.needsRaise:
+            if c.needs_raise:
                 # RAISE
                 for nx, ny in self.get_neighbors(x,y):
                     nc = self.data[nx][ny]
-                    if not (nc.obst is not None and not nc.needsRaise):
+                    if not (nc.obst is not None and not nc.needs_raise):
                         continue
                     nox, noy = nc.obst
                     tc = self.data[nox][noy]
                     if not tc.isOccupied(nox, noy):
                         self.q.push( nc.sqdist, (nx, ny) )
                         nc.queueing = QState.FW_QUEUED
-                        nc.needsRaise = True
+                        nc.needs_raise = True
                         nc.obst = None
                         if update_real_dist:
                             nc.dist = INFINITY
@@ -175,17 +175,17 @@ class DynamicVoronoi:
                         if nc.queueing != QState.FW_QUEUED:
                             self.q.push(nc.sqdist, (nx, ny))
                             nc.queueing = QState.FW_QUEUED
-                c.needsRaise = False
+                c.needs_raise = False
                 c.queueing = QState.BW_PROCESSED
             
             elif self.check_obstacle_occupation(c):
                 # LOWER
                 c.queueing = QState.FW_PROCESSED
-                c.voronoi = occupied;
+                c.voronoi = State.OCCUPIED
 
                 for nx, ny in self.get_neighbors(x,y):
                     nc = self.data[nx][ny]
-                    if not nc.needsRaise:
+                    if not nc.needs_raise:
                         distx = nx - c.obst[0]
                         disty = ny - c.obst[1]
                         newSqDistance = distx*distx + disty*disty		
@@ -201,8 +201,7 @@ class DynamicVoronoi:
                                 nc.dist = sqrt(float(newSqDistance))
                             
                             nc.sqdist = newSqDistance;
-                            nc.obst[0] = c.obst[0];
-                            nc.obst[1] = c.obst[1];
+                            nc.obst = c.obst
                         else: 
                             self.checkVoro(x,y,nx,ny,c,nc);
                         
@@ -301,10 +300,6 @@ class DynamicVoronoi:
         c = self.data[x][y]
         return c.obst[0]==x and c.obst[1]==y
         
-    def visualize(self, filename="result.ppm"):
-        """ write the current distance map and voronoi diagram as ppm file"""
-        None
-        
     def checkVoro(self, x, y, nx, ny, c, nc):
         if not ((c.sqdist>1 or nc.sqdist>1) and nc.obst is not None):
             return
@@ -341,14 +336,14 @@ class DynamicVoronoi:
 
 
     def reviveVoroNeighbors(self, x, y):
-        for nx, ny in self.getNeighbors(x,y):
+        for nx, ny in self.get_neighbors(x,y):
             nc = self.data[nx][ny]
-            if nc.sqdist != INT_MAX and not nc.needsRaise and (nc.voronoi == State.KEEP or nc.voronoi == State.PRUNE):
+            if nc.sqdist != INT_MAX and not nc.needs_raise and (nc.voronoi == State.KEEP or nc.voronoi == State.PRUNE):
                 nc.voronoi = State.FREE
                 self.prune_q.append((nx,ny))
 
 
-    def commitAndColorize(self, updateRealDist=True):
+    def commit_and_colorize(self, updateRealDist=True):
         # ADD NEW OBSTACLES
         for x,y in self.add_list:
             c = self.data[x][y]
@@ -360,7 +355,7 @@ class DynamicVoronoi:
                 c.obstX = x
                 c.obstY = y
                 c.queueing = QState.FW_QUEUED
-                c.voronoi = occupied
+                c.voronoi = State.OCCUPIED
                 self.q.push(0, (x,y))
         self.add_list = []
         
@@ -374,7 +369,7 @@ class DynamicVoronoi:
             if updateRealDist:
                 c.dist  = INFINITY
             c.sqdist = INT_MAX
-            c.needsRaise = True                
+            c.needs_raise = True                
                 
         self.remove_list = []
 

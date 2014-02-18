@@ -13,7 +13,7 @@ class BucketQueue:
  
     def __init__(self):
         # make sure the index array is created
-        if not BucketQueue.square_indices:
+        if BucketQueue.square_indices is None:
             BucketQueue.init_square_indices()
            
         self.nextBucket = 1E60
@@ -42,7 +42,7 @@ class BucketQueue:
 
         if (idx<self.nextBucket): 
             self.nextBucket = idx
-        count+=1
+        self.count+=1
     
     def pop(self):
         for i in range(self.nextBucket, len(self.buckets)):
@@ -55,12 +55,12 @@ class BucketQueue:
 
     @staticmethod
     def init_square_indices():
-        a = [-1] * 2 * MAXDIST*MAXDIST+1
+        a = [-1] * (2 * MAXDIST*MAXDIST+1)
         count = 0
         for x in range(MAXDIST+1):
             for y in range(x+1):
                 sqr = x*x + y*y
                 a[sqr] = count
                 count += 1
-        BucketQueue.sqaure_indices = a
+        BucketQueue.square_indices = a
         BucketQueue.numBuckets = count

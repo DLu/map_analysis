@@ -3,13 +3,13 @@ RESERVE = 64
 
 
 class BucketQueue:
-   """//! Priority queue for integer coordinates with squared distances as priority.
+    """//! Priority queue for integer coordinates with squared distances as priority.
 /** A priority queue that uses buckets to group elements with the same priority.
  *  The individual buckets are unsorted, which increases efficiency if these groups are large.
  *  The elements are assumed to be integer coordinates, and the priorities are assumed
  *  to be squared euclidean distances (integers).
  */"""
-    BucketQueue.square_indices = None
+    square_indices = None
  
     def __init__(self):
         # make sure the index array is created
